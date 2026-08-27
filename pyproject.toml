@@ -1,0 +1,37 @@
+[project]
+name = "eventhub"
+version = "0.1.0"
+description = "Event ticketing & seat reservation API"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8",      # линтер + форматтер
+    "mypy>=1.13",     # статическая типизация
+    "pytest>=8.3",    # тесты
+]
+
+# Ruff: линтер + форматтер
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E,F - базовые ошибки/pyflakes; I - сортировка импортов (замена isort);
+# UP - подсказки на современный синтаксис Python; B - bugbear (частые баги)
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]  # длину строк уже контролирует line-length + форматтер
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+# Mypy: статическая типизация
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = ["tests/"]
+
+# Pytest: тесты
+[tool.pytest.ini_options]
+testpaths = ["tests"]
