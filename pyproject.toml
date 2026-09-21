@@ -3,16 +3,24 @@ name = "eventhub"
 version = "0.1.0"
 description = "Event ticketing & seat reservation API"
 requires-python = ">=3.12"
-dependencies = []
+
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",           # async-драйвер для подключения к PostgreSQL
+    "alembic>=1.14",           # миграции схемы БД
+    "pydantic-settings>=2.6",  # чтение переменных окружения из .env
+]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.8",      # линтер + форматтер
-    "mypy>=1.13",     # статическая типизация
-    "pytest>=8.3",    # тесты
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",     # тесты для async-кода
+    "testcontainers[postgres]>=4.9",  # реальный Postgres в Docker на время тестов
 ]
 
-# Ruff: линтер + форматтер
+# ---------- Ruff: линтер + форматтер в одном инструменте ----------
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -26,12 +34,13 @@ ignore = ["E501"]  # длину строк уже контролирует line-
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
-# Mypy: статическая типизация
+# ---------- Mypy: статическая типизация ----------
 [tool.mypy]
 python_version = "3.12"
 strict = true
 exclude = ["tests/"]
 
-# Pytest: тесты
+# ---------- Pytest ----------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
