@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.30",           # async-драйвер для подключения к PostgreSQL
     "alembic>=1.14",           # миграции схемы БД
     "pydantic-settings>=2.6",  # чтение переменных окружения из .env
+    "uuid6>=2025.0.1",
 ]
 
 [dependency-groups]
