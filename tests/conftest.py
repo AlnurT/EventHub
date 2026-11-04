@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from testcontainers.community.postgres import PostgresContainer
 
 from app.models import Base, User
