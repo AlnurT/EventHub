@@ -1,9 +1,11 @@
+from datetime import datetime
+
 import pytest
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from testcontainers.community.postgres import PostgresContainer
 
-from app.models import Base, User
+from app.models import Base, User, Event, Seat, Booking
 
 
 @pytest.fixture(scope="session")
@@ -19,6 +21,30 @@ async def set_data(session):
         hashed_password="12345",
     )
     session.add(user)
+    await session.flush()
+
+    event = Event(
+        title="event",
+        starts_at=datetime.now(),
+        organizer_id=user.id,
+    )
+    session.add(event)
+    await session.flush()
+
+    seat = Seat(
+        event_id=event.id,
+        row=1,
+        number=2,
+    )
+    session.add(seat)
+    await session.flush()
+
+    booking = Booking(
+        seat_id=seat.id,
+        user_id=user.id,
+    )
+    session.add(booking)
+
     await session.commit()
 
 
