@@ -1,26 +1,11 @@
 import pytest
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User, Seat, Booking
 from app.models.booking import Status
 
 
-async def test_booking_model(session: AsyncSession) -> None:
-    query = select(Booking)
-    result = await session.execute(query)
-    booking = result.scalar_one_or_none()
-
-    query = select(User)
-    result = await session.execute(query)
-    user = result.scalar_one_or_none()
-
-    query = select(Seat)
-    result = await session.execute(query)
-    seat = result.scalar_one_or_none()
-
-    assert booking is not None
+async def test_booking_model(session, user, seat, booking):
     assert booking.id is not None
     assert booking.seat_id == seat.id
     assert booking.user_id == user.id
@@ -28,58 +13,37 @@ async def test_booking_model(session: AsyncSession) -> None:
     assert booking.created_at is not None
 
 
-async def test_double_booking(session: AsyncSession) -> None:
-    user2 = User(
-        name="new_user2",
-        email="user2@mail.ru",
-        hashed_password="12345",
-    )
-    session.add(user2)
+async def test_booking_user_delete(session: AsyncSession, user, booking):
+    await session.delete(user)
     await session.flush()
+    await session.refresh(booking)
 
-    query = select(Seat)
-    result = await session.execute(query)
-    seat = result.scalar_one_or_none()
+    assert booking.id is not None
+    assert booking.user_id is None
 
-    booking = Booking(
-        seat_id=seat.id,
-        user_id=user2.id,
-    )
-    session.add(booking)
+
+async def test_booking_seat_delete(session: AsyncSession, seat, booking):
+    with pytest.raises(IntegrityError):
+        await session.delete(seat)
+        await session.flush()
+        await session.refresh(booking)
+
+
+async def test_double_booking(session: AsyncSession, user, make_user, booking, make_booking) -> None:
+    user2 = await make_user("user2@example.com")
 
     with pytest.raises(IntegrityError):
-        await session.commit()
+        await make_booking(user2)
 
 
-async def test_booking_after_cancel(session: AsyncSession) -> None:
-    user2 = User(
-        name="new_user2",
-        email="user2@mail.ru",
-        hashed_password="12345",
-    )
-    session.add(user2)
-    await session.flush()
-
-    query = select(Seat)
-    result = await session.execute(query)
-    seat = result.scalar_one_or_none()
-
-    query = select(Booking)
-    result = await session.execute(query)
-    booking = result.scalar_one_or_none()
+async def test_booking_after_cancel(session: AsyncSession, user, make_user, booking, make_booking) -> None:
+    user2 = await make_user("user2@example.com")
     booking.status = Status.cancelled
+    booking2 = await make_booking(user2)
 
-    booking2 = Booking(
-        seat_id=seat.id,
-        user_id=user2.id,
-    )
-    session.add(booking2)
-    await session.commit()
-
-    assert booking2 is not None
     assert booking2.id is not None
-    assert booking2.seat_id == seat.id
-    assert booking2.user_id == user2.id
+    assert booking2.seat_id == booking.seat_id
+    assert booking2.user_id != booking.user_id
     assert booking.status == Status.cancelled
     assert booking2.status == Status.confirmed
     assert booking2.created_at is not None
