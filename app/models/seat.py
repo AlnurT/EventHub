@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class Seat(Base):
     __tablename__ = "seats"
     __table_args__ = (
-        UniqueConstraint("event_id", "row", "number", name="uq_event_row_number"),
+        UniqueConstraint("event_id", "row", "number"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid7)

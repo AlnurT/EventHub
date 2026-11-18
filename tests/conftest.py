@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from testcontainers.community.postgres import PostgresContainer
 
 from app.models import Base, Booking, Event, Seat, User
+from app.models.booking import Status
 
 
 @pytest.fixture(scope="session")
@@ -41,12 +42,12 @@ async def async_test_session(engine):
 
 
 @pytest.fixture
-async def make_user(session):
-    async def _make_user(email: str):
+def make_user(session):
+    async def _make_user(email: str, name: str = "user", password: str = "12345"):
         user = User(
-            name="user",
+            name=name,
             email=email,
-            hashed_password="12345",
+            hashed_password=password,
         )
         session.add(user)
         await session.flush()
@@ -61,10 +62,10 @@ async def user(make_user):
 
 
 @pytest.fixture
-async def make_event(session, user):
-    async def _make_event():
+def make_event(session, user):
+    async def _make_event(title: str = "event"):
         event = Event(
-            title="event",
+            title=title,
             starts_at=datetime.now(UTC),
             organizer_id=user.id,
         )
@@ -81,12 +82,12 @@ async def event(make_event):
 
 
 @pytest.fixture
-async def make_seat(session):
-    async def _make_seat(event):
+def make_seat(session):
+    async def _make_seat(event, row: int = 1, number: int = 2):
         seat = Seat(
             event_id=event.id,
-            row=1,
-            number=2,
+            row=row,
+            number=number,
         )
         session.add(seat)
         await session.flush()
@@ -101,11 +102,12 @@ async def seat(make_seat, event):
 
 
 @pytest.fixture
-async def make_booking(session, seat):
-    async def _make_booking(user):
+def make_booking(session):
+    async def _make_booking(user, seat, status: Status = Status.confirmed):
         booking = Booking(
             seat_id=seat.id,
             user_id=user.id,
+            status=status,
         )
         session.add(booking)
         await session.flush()
@@ -116,4 +118,4 @@ async def make_booking(session, seat):
 
 @pytest.fixture
 async def booking(make_booking, seat, user):
-    return await make_booking(user)
+    return await make_booking(user, seat)
